@@ -41,9 +41,18 @@ func bacaStr() string {
 }
 
 func bacaInt() int {
-	pembaca.Scan()
-	n, _ := strconv.Atoi(strings.TrimSpace(pembaca.Text()))
-	return n
+	for {
+		pembaca.Scan()
+		teks := strings.TrimSpace(pembaca.Text())
+		if teks == "" {
+			return 0
+		}
+		angka, galat := strconv.Atoi(teks)
+		if galat == nil {
+			return angka
+		}
+		fmt.Print(">> Harap masukkan murni angka saja: ")
+	}
 }
 
 func potong(s string, n int) string {
@@ -264,9 +273,13 @@ func cariTugasSequential(kata string) {
 			cocok = true
 		}
 		if cocok {
-			fmt.Printf(" - [%d] %s | %s | Prioritas %d | %d menit\n",
+			stat := "Belum"
+			if dataTugas[i].Selesai {
+				stat = "Selesai"
+			}
+			fmt.Printf(" - [%d] %s | %s | Prioritas %d | %d menit | Status: %s\n",
 				i+1, dataTugas[i].Tanggal, dataTugas[i].Nama,
-				dataTugas[i].Prioritas, dataTugas[i].Durasi)
+				dataTugas[i].Prioritas, dataTugas[i].Durasi, stat)
 			ketemu = ketemu + 1
 		}
 	}
@@ -352,15 +365,32 @@ func cariTugasBinary(tgl string) {
 		fmt.Println("Tugas dengan tanggal", tgl, "tidak ditemukan.")
 		return
 	}
-	stat := "Belum"
-	if dataTugas[idx].Selesai {
-		stat = "Selesai"
+
+	kiri := idx
+	for kiri > 0 && dataTugas[kiri-1].Tanggal == tgl {
+		kiri = kiri - 1
 	}
-	fmt.Printf(" Tanggal   : %s\n", dataTugas[idx].Tanggal)
-	fmt.Printf(" Nama      : %s\n", dataTugas[idx].Nama)
-	fmt.Printf(" Prioritas : %d\n", dataTugas[idx].Prioritas)
-	fmt.Printf(" Durasi    : %d menit\n", dataTugas[idx].Durasi)
-	fmt.Printf(" Status    : %s\n", stat)
+
+	kanan := idx
+	for kanan < jumTugas-1 && dataTugas[kanan+1].Tanggal == tgl {
+		kanan = kanan + 1
+	}
+
+	ketemu := 0
+	for i := kiri; i <= kanan; i++ {
+		stat := "Belum"
+		if dataTugas[i].Selesai {
+			stat = "Selesai"
+		}
+		fmt.Printf(" Data ke-%d:\n", ketemu+1)
+		fmt.Printf(" Tanggal   : %s\n", dataTugas[i].Tanggal)
+		fmt.Printf(" Nama      : %s\n", dataTugas[i].Nama)
+		fmt.Printf(" Prioritas : %d\n", dataTugas[i].Prioritas)
+		fmt.Printf(" Durasi    : %d menit\n", dataTugas[i].Durasi)
+		fmt.Printf(" Status    : %s\n\n", stat)
+		ketemu = ketemu + 1
+	}
+	fmt.Printf(" Total ditemukan: %d data\n", ketemu)
 }
 
 func cariMoodBinary(tgl string) {
@@ -386,25 +416,42 @@ func cariMoodBinary(tgl string) {
 		fmt.Println("Catatan mood dengan tanggal", tgl, "tidak ditemukan.")
 		return
 	}
-	fmt.Printf(" Tanggal       : %s\n", dataMood[idx].Tanggal)
-	fmt.Printf(" Tugas Terkait : %s\n", dataMood[idx].TugasTerkait)
-	fmt.Printf(" Skor          : %d\n", dataMood[idx].Skor)
-	fmt.Printf(" Deskripsi     : %s\n", dataMood[idx].Deskripsi)
+
+	kiri := idx
+	for kiri > 0 && dataMood[kiri-1].Tanggal == tgl {
+		kiri = kiri - 1
+	}
+
+	kanan := idx
+	for kanan < jumMood-1 && dataMood[kanan+1].Tanggal == tgl {
+		kanan = kanan + 1
+	}
+
+	ketemu := 0
+	for i := kiri; i <= kanan; i++ {
+		fmt.Printf(" Data ke-%d:\n", ketemu+1)
+		fmt.Printf(" Tanggal       : %s\n", dataMood[i].Tanggal)
+		fmt.Printf(" Tugas Terkait : %s\n", dataMood[i].TugasTerkait)
+		fmt.Printf(" Skor          : %d\n", dataMood[i].Skor)
+		fmt.Printf(" Deskripsi     : %s\n\n", dataMood[i].Deskripsi)
+		ketemu = ketemu + 1
+	}
+	fmt.Printf(" Total ditemukan: %d data\n", ketemu)
 }
 
 func selectionSortPrioritas() {
 	for pass := 1; pass < jumTugas; pass++ {
 		idx := pass - 1
 		for i := pass; i < jumTugas; i++ {
-			if dataTugas[i].Prioritas > dataTugas[idx].Prioritas {
+			if dataTugas[i].Prioritas < dataTugas[idx].Prioritas {
 				idx = i
 			}
 		}
 		dataTugas[pass-1], dataTugas[idx] = dataTugas[idx], dataTugas[pass-1]
 	}
-	fmt.Println("\n===================================================================")
-	fmt.Println("| Tugas terurut berdasarkan PRIORITAS (Selection Sort - Descending)|")
-	fmt.Println("===================================================================")
+	fmt.Println("\n==================================================================")
+	fmt.Println("| Tugas terurut berdasarkan PRIORITAS (Selection Sort - Ascending)|")
+	fmt.Println("==================================================================")
 	tampilTugas()
 }
 
