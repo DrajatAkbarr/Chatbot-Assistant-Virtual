@@ -10,8 +10,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const NMAX = 100
-
 type Mood struct {
 	Tanggal      string
 	TugasTerkait string
@@ -27,12 +25,8 @@ type Tugas struct {
 	Selesai   bool
 }
 
-var dataMood [NMAX]Mood
-var jumMood int
-
-var dataTugas [NMAX]Tugas
-var jumTugas int
-
+var dataMood []Mood
+var dataTugas []Tugas
 var pembaca *bufio.Scanner
 
 func bacaStr() string {
@@ -81,10 +75,6 @@ func tampilHeaderBesar() {
 }
 
 func tambahMood() {
-	if jumMood >= NMAX {
-		fmt.Println(">> Memori catatan mood penuh.")
-		return
-	}
 	fmt.Print("Tanggal (DD-MM-YYYY)  : ")
 	tgl := bacaStr()
 	fmt.Print("Tugas terkait         : ")
@@ -94,23 +84,23 @@ func tambahMood() {
 	fmt.Print("Deskripsi perasaan    : ")
 	ds := bacaStr()
 
-	dataMood[jumMood].Tanggal = tgl
-	dataMood[jumMood].TugasTerkait = tg
-	dataMood[jumMood].Skor = sk
-	dataMood[jumMood].Deskripsi = ds
-	jumMood = jumMood + 1
-
+	dataMood = append(dataMood, Mood{
+		Tanggal:      tgl,
+		TugasTerkait: tg,
+		Skor:         sk,
+		Deskripsi:    ds,
+	})
 	fmt.Println(">> Catatan suasana hati berhasil ditambahkan.")
 }
 
 func ubahMood() {
 	tampilMood()
-	if jumMood == 0 {
+	if len(dataMood) == 0 {
 		return
 	}
 	fmt.Print("Nomor catatan yang ingin diubah: ")
 	no := bacaInt() - 1
-	if no < 0 || no >= jumMood {
+	if no < 0 || no >= len(dataMood) {
 		fmt.Println(">> Nomor tidak valid.")
 		return
 	}
@@ -127,27 +117,20 @@ func ubahMood() {
 
 func hapusMood() {
 	tampilMood()
-	if jumMood == 0 {
+	if len(dataMood) == 0 {
 		return
 	}
 	fmt.Print("Nomor catatan yang ingin dihapus: ")
 	no := bacaInt() - 1
-	if no < 0 || no >= jumMood {
+	if no < 0 || no >= len(dataMood) {
 		fmt.Println(">> Nomor tidak valid.")
 		return
 	}
-	for i := no; i < jumMood-1; i++ {
-		dataMood[i] = dataMood[i+1]
-	}
-	jumMood = jumMood - 1
+	dataMood = append(dataMood[:no], dataMood[no+1:]...)
 	fmt.Println(">> Catatan berhasil dihapus.")
 }
 
 func tambahTugas() {
-	if jumTugas >= NMAX {
-		fmt.Println(">> Memori daftar tugas penuh.")
-		return
-	}
 	fmt.Print("Tanggal (DD-MM-YYYY)        : ")
 	tg := bacaStr()
 	fmt.Print("Nama tugas                  : ")
@@ -159,28 +142,24 @@ func tambahTugas() {
 	fmt.Print("Status (1=selesai, 0=belum) : ")
 	st := bacaInt()
 
-	dataTugas[jumTugas].Tanggal = tg
-	dataTugas[jumTugas].Nama = nm
-	dataTugas[jumTugas].Prioritas = pr
-	dataTugas[jumTugas].Durasi = dr
-	if st == 1 {
-		dataTugas[jumTugas].Selesai = true
-	} else {
-		dataTugas[jumTugas].Selesai = false
-	}
-	jumTugas = jumTugas + 1
-
+	dataTugas = append(dataTugas, Tugas{
+		Tanggal:   tg,
+		Nama:      nm,
+		Prioritas: pr,
+		Durasi:    dr,
+		Selesai:   st == 1,
+	})
 	fmt.Println(">> Tugas berhasil ditambahkan.")
 }
 
 func ubahTugas() {
 	tampilTugas()
-	if jumTugas == 0 {
+	if len(dataTugas) == 0 {
 		return
 	}
 	fmt.Print("Nomor tugas yang ingin diubah: ")
 	no := bacaInt() - 1
-	if no < 0 || no >= jumTugas {
+	if no < 0 || no >= len(dataTugas) {
 		fmt.Println(">> Nomor tidak valid.")
 		return
 	}
@@ -193,30 +172,22 @@ func ubahTugas() {
 	fmt.Print("Durasi (menit)            : ")
 	dataTugas[no].Durasi = bacaInt()
 	fmt.Print("Status (1/0)              : ")
-	st := bacaInt()
-	if st == 1 {
-		dataTugas[no].Selesai = true
-	} else {
-		dataTugas[no].Selesai = false
-	}
+	dataTugas[no].Selesai = bacaInt() == 1
 	fmt.Println(">> Tugas berhasil diubah.")
 }
 
 func hapusTugas() {
 	tampilTugas()
-	if jumTugas == 0 {
+	if len(dataTugas) == 0 {
 		return
 	}
 	fmt.Print("Nomor tugas yang ingin dihapus: ")
 	no := bacaInt() - 1
-	if no < 0 || no >= jumTugas {
+	if no < 0 || no >= len(dataTugas) {
 		fmt.Println(">> Nomor tidak valid.")
 		return
 	}
-	for i := no; i < jumTugas-1; i++ {
-		dataTugas[i] = dataTugas[i+1]
-	}
-	jumTugas = jumTugas - 1
+	dataTugas = append(dataTugas[:no], dataTugas[no+1:]...)
 	fmt.Println(">> Tugas berhasil dihapus.")
 }
 
@@ -226,12 +197,12 @@ func tampilMood() {
 	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------------------------")
 	fmt.Printf(" %-4s | %-12s | %-30s | %-4s | %-80s\n", "No", "Tanggal", "Tugas Terkait", "Skor", "Deskripsi")
 	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------------------------")
-	if jumMood == 0 {
+	if len(dataMood) == 0 {
 		fmt.Println(" (belum ada data)")
 	} else {
-		for i := 0; i < jumMood; i++ {
+		for i, m := range dataMood {
 			fmt.Printf(" %-4d | %-12s | %-30s | %-4d | %-80s\n",
-				i+1, dataMood[i].Tanggal, potong(dataMood[i].TugasTerkait, 30), dataMood[i].Skor, potong(dataMood[i].Deskripsi, 80))
+				i+1, m.Tanggal, potong(m.TugasTerkait, 30), m.Skor, potong(m.Deskripsi, 80))
 		}
 	}
 	fmt.Println("--------------------------------------------------------------------------------------------------------------------------------------------------")
@@ -243,16 +214,16 @@ func tampilTugas() {
 	fmt.Println("-----------------------------------------------------------------------------------------------------------------------------------")
 	fmt.Printf(" %-4s | %-12s | %-65s | %-9s | %-6s | %-8s\n", "No", "Tanggal", "Nama Tugas", "Prioritas", "Durasi", "Status")
 	fmt.Println("-----------------------------------------------------------------------------------------------------------------------------------")
-	if jumTugas == 0 {
+	if len(dataTugas) == 0 {
 		fmt.Println(" (belum ada data)")
 	} else {
-		for i := 0; i < jumTugas; i++ {
+		for i, t := range dataTugas {
 			stat := "Belum"
-			if dataTugas[i].Selesai {
+			if t.Selesai {
 				stat = "Selesai"
 			}
 			fmt.Printf(" %-4d | %-12s | %-65s | %-9d | %-6d | %-8s\n",
-				i+1, dataTugas[i].Tanggal, potong(dataTugas[i].Nama, 65), dataTugas[i].Prioritas, dataTugas[i].Durasi, stat)
+				i+1, t.Tanggal, potong(t.Nama, 65), t.Prioritas, t.Durasi, stat)
 		}
 	}
 	fmt.Println("-----------------------------------------------------------------------------------------------------------------------------------")
@@ -264,23 +235,16 @@ func cariTugasSequential(kata string) {
 	fmt.Println("===========================================")
 	ketemu := 0
 	kataKecil := strings.ToLower(kata)
-	for i := 0; i < jumTugas; i++ {
-		cocok := false
-		if dataTugas[i].Tanggal == kata {
-			cocok = true
-		}
-		if strings.Contains(strings.ToLower(dataTugas[i].Nama), kataKecil) {
-			cocok = true
-		}
+	for i, t := range dataTugas {
+		cocok := t.Tanggal == kata || strings.Contains(strings.ToLower(t.Nama), kataKecil)
 		if cocok {
 			stat := "Belum"
-			if dataTugas[i].Selesai {
+			if t.Selesai {
 				stat = "Selesai"
 			}
 			fmt.Printf(" - [%d] %s | %s | Prioritas %d | %d menit | Status: %s\n",
-				i+1, dataTugas[i].Tanggal, dataTugas[i].Nama,
-				dataTugas[i].Prioritas, dataTugas[i].Durasi, stat)
-			ketemu = ketemu + 1
+				i+1, t.Tanggal, t.Nama, t.Prioritas, t.Durasi, stat)
+			ketemu++
 		}
 	}
 	if ketemu == 0 {
@@ -296,19 +260,14 @@ func cariMoodSequential(kata string) {
 	fmt.Println("==========================================")
 	ketemu := 0
 	kataKecil := strings.ToLower(kata)
-	for i := 0; i < jumMood; i++ {
-		cocok := false
-		if dataMood[i].Tanggal == kata {
-			cocok = true
-		}
-		if strings.Contains(strings.ToLower(dataMood[i].Deskripsi), kataKecil) || strings.Contains(strings.ToLower(dataMood[i].TugasTerkait), kataKecil) {
-			cocok = true
-		}
+	for i, m := range dataMood {
+		cocok := m.Tanggal == kata ||
+			strings.Contains(strings.ToLower(m.Deskripsi), kataKecil) ||
+			strings.Contains(strings.ToLower(m.TugasTerkait), kataKecil)
 		if cocok {
 			fmt.Printf(" - [%d] %s | Tugas: %s | Skor %d | %s\n",
-				i+1, dataMood[i].Tanggal, dataMood[i].TugasTerkait,
-				dataMood[i].Skor, dataMood[i].Deskripsi)
-			ketemu = ketemu + 1
+				i+1, m.Tanggal, m.TugasTerkait, m.Skor, m.Deskripsi)
+			ketemu++
 		}
 	}
 	if ketemu == 0 {
@@ -319,9 +278,10 @@ func cariMoodSequential(kata string) {
 }
 
 func urutTugasTanggal() {
-	for pass := 1; pass < jumTugas; pass++ {
+	n := len(dataTugas)
+	for pass := 1; pass < n; pass++ {
 		idx := pass - 1
-		for i := pass; i < jumTugas; i++ {
+		for i := pass; i < n; i++ {
 			if dataTugas[i].Tanggal < dataTugas[idx].Tanggal {
 				idx = i
 			}
@@ -331,9 +291,10 @@ func urutTugasTanggal() {
 }
 
 func urutMoodTanggal() {
-	for pass := 1; pass < jumMood; pass++ {
+	n := len(dataMood)
+	for pass := 1; pass < n; pass++ {
 		idx := pass - 1
-		for i := pass; i < jumMood; i++ {
+		for i := pass; i < n; i++ {
 			if dataMood[i].Tanggal < dataMood[idx].Tanggal {
 				idx = i
 			}
@@ -344,9 +305,8 @@ func urutMoodTanggal() {
 
 func cariTugasBinary(tgl string) {
 	urutTugasTanggal()
-	low := 0
-	high := jumTugas - 1
-	idx := -1
+	n := len(dataTugas)
+	low, high, idx := 0, n-1, -1
 	for low <= high {
 		mid := low + (high-low)/2
 		if dataTugas[mid].Tanggal == tgl {
@@ -365,39 +325,35 @@ func cariTugasBinary(tgl string) {
 		fmt.Println("Tugas dengan tanggal", tgl, "tidak ditemukan.")
 		return
 	}
-
 	kiri := idx
 	for kiri > 0 && dataTugas[kiri-1].Tanggal == tgl {
-		kiri = kiri - 1
+		kiri--
 	}
-
 	kanan := idx
-	for kanan < jumTugas-1 && dataTugas[kanan+1].Tanggal == tgl {
-		kanan = kanan + 1
+	for kanan < n-1 && dataTugas[kanan+1].Tanggal == tgl {
+		kanan++
 	}
-
 	ketemu := 0
 	for i := kiri; i <= kanan; i++ {
 		stat := "Belum"
 		if dataTugas[i].Selesai {
 			stat = "Selesai"
 		}
-		fmt.Printf(" Data ke-%d:\n", ketemu+1)
+		ketemu++
+		fmt.Printf(" Data ke-%d:\n", ketemu)
 		fmt.Printf(" Tanggal   : %s\n", dataTugas[i].Tanggal)
 		fmt.Printf(" Nama      : %s\n", dataTugas[i].Nama)
 		fmt.Printf(" Prioritas : %d\n", dataTugas[i].Prioritas)
 		fmt.Printf(" Durasi    : %d menit\n", dataTugas[i].Durasi)
 		fmt.Printf(" Status    : %s\n\n", stat)
-		ketemu = ketemu + 1
 	}
 	fmt.Printf(" Total ditemukan: %d data\n", ketemu)
 }
 
 func cariMoodBinary(tgl string) {
 	urutMoodTanggal()
-	low := 0
-	high := jumMood - 1
-	idx := -1
+	n := len(dataMood)
+	low, high, idx := 0, n-1, -1
 	for low <= high {
 		mid := low + (high-low)/2
 		if dataMood[mid].Tanggal == tgl {
@@ -416,33 +372,31 @@ func cariMoodBinary(tgl string) {
 		fmt.Println("Catatan mood dengan tanggal", tgl, "tidak ditemukan.")
 		return
 	}
-
 	kiri := idx
 	for kiri > 0 && dataMood[kiri-1].Tanggal == tgl {
-		kiri = kiri - 1
+		kiri--
 	}
-
 	kanan := idx
-	for kanan < jumMood-1 && dataMood[kanan+1].Tanggal == tgl {
-		kanan = kanan + 1
+	for kanan < n-1 && dataMood[kanan+1].Tanggal == tgl {
+		kanan++
 	}
-
 	ketemu := 0
 	for i := kiri; i <= kanan; i++ {
-		fmt.Printf(" Data ke-%d:\n", ketemu+1)
+		ketemu++
+		fmt.Printf(" Data ke-%d:\n", ketemu)
 		fmt.Printf(" Tanggal       : %s\n", dataMood[i].Tanggal)
 		fmt.Printf(" Tugas Terkait : %s\n", dataMood[i].TugasTerkait)
 		fmt.Printf(" Skor          : %d\n", dataMood[i].Skor)
 		fmt.Printf(" Deskripsi     : %s\n\n", dataMood[i].Deskripsi)
-		ketemu = ketemu + 1
 	}
 	fmt.Printf(" Total ditemukan: %d data\n", ketemu)
 }
 
 func selectionSortPrioritas() {
-	for pass := 1; pass < jumTugas; pass++ {
+	n := len(dataTugas)
+	for pass := 1; pass < n; pass++ {
 		idx := pass - 1
-		for i := pass; i < jumTugas; i++ {
+		for i := pass; i < n; i++ {
 			if dataTugas[i].Prioritas < dataTugas[idx].Prioritas {
 				idx = i
 			}
@@ -456,12 +410,13 @@ func selectionSortPrioritas() {
 }
 
 func insertionSortDurasi() {
-	for i := 1; i < jumTugas; i++ {
+	n := len(dataTugas)
+	for i := 1; i < n; i++ {
 		temp := dataTugas[i]
 		j := i - 1
 		for j >= 0 && dataTugas[j].Durasi > temp.Durasi {
 			dataTugas[j+1] = dataTugas[j]
-			j = j - 1
+			j--
 		}
 		dataTugas[j+1] = temp
 	}
@@ -475,27 +430,26 @@ func statistikMood() {
 	fmt.Println("\n============================================")
 	fmt.Println("|   STATISTIK TREN SUASANA HATI MINGGUAN   |")
 	fmt.Println("============================================")
-	if jumMood == 0 {
+	n := len(dataMood)
+	if n == 0 {
 		fmt.Println("(belum ada data mood untuk dihitung)")
 		return
 	}
-
 	total := 0
 	tertinggi := dataMood[0].Skor
 	terendah := dataMood[0].Skor
-	for i := 0; i < jumMood; i++ {
-		total = total + dataMood[i].Skor
-		if dataMood[i].Skor > tertinggi {
-			tertinggi = dataMood[i].Skor
+	for _, m := range dataMood {
+		total += m.Skor
+		if m.Skor > tertinggi {
+			tertinggi = m.Skor
 		}
-		if dataMood[i].Skor < terendah {
-			terendah = dataMood[i].Skor
+		if m.Skor < terendah {
+			terendah = m.Skor
 		}
 	}
-	rata := float64(total) / float64(jumMood)
-
+	rata := float64(total) / float64(n)
 	fmt.Println("-------------------------------------")
-	fmt.Printf(" Total catatan        | %-8d\n", jumMood)
+	fmt.Printf(" Total catatan        | %-8d\n", n)
 	fmt.Printf(" Rata-rata skor       | %-8.2f\n", rata)
 	fmt.Printf(" Skor tertinggi       | %-8d\n", tertinggi)
 	fmt.Printf(" Skor terendah        | %-8d\n", terendah)
@@ -507,16 +461,12 @@ func statistikMood() {
 	fmt.Println("--------------------------------------------------")
 	fmt.Printf(" %-12s | %-20s | %-4s\n", "Tanggal", "Bar", "Skor")
 	fmt.Println("--------------------------------------------------")
-	for i := 0; i < jumMood; i++ {
-		bar := ""
-		for k := 0; k < dataMood[i].Skor; k++ {
-			bar = bar + "#"
-		}
+	for _, m := range dataMood {
+		bar := strings.Repeat("#", m.Skor)
 		for len(bar) < 19 {
-			bar = bar + " "
+			bar += " "
 		}
-		fmt.Printf(" %-12s | %-20s | %-4d\n",
-			dataMood[i].Tanggal, bar, dataMood[i].Skor)
+		fmt.Printf(" %-12s | %-20s | %-4d\n", m.Tanggal, bar, m.Skor)
 	}
 	fmt.Println("--------------------------------------------------")
 }
@@ -525,24 +475,25 @@ func statistikTugas() {
 	fmt.Println("\n===============================================")
 	fmt.Println("| STATISTIK TINGKAT PENYELESAIAN TUGAS HARIAN |")
 	fmt.Println("===============================================")
-	if jumTugas == 0 {
+	n := len(dataTugas)
+	if n == 0 {
 		fmt.Println("(belum ada data tugas untuk dihitung)")
 		return
 	}
 	selesai := 0
 	totalDurasi := 0
-	for i := 0; i < jumTugas; i++ {
-		if dataTugas[i].Selesai {
-			selesai = selesai + 1
+	for _, t := range dataTugas {
+		if t.Selesai {
+			selesai++
 		}
-		totalDurasi = totalDurasi + dataTugas[i].Durasi
+		totalDurasi += t.Durasi
 	}
-	belum := jumTugas - selesai
-	persen := float64(selesai) * 100.0 / float64(jumTugas)
-	rataDurasi := float64(totalDurasi) / float64(jumTugas)
+	belum := n - selesai
+	persen := float64(selesai) * 100.0 / float64(n)
+	rataDurasi := float64(totalDurasi) / float64(n)
 
 	fmt.Println("-------------------------------------------")
-	fmt.Printf(" Total tugas            | %-8d\n", jumTugas)
+	fmt.Printf(" Total tugas            | %-8d\n", n)
 	fmt.Printf(" Sudah selesai          | %-8d\n", selesai)
 	fmt.Printf(" Belum selesai          | %-8d\n", belum)
 	fmt.Printf(" Tingkat penyelesaian   | %-7.1f%%\n", persen)
@@ -550,8 +501,8 @@ func statistikTugas() {
 	fmt.Println("-------------------------------------------")
 	fmt.Println()
 
-	fmt.Print("Progress: [")
 	bar := int(persen) / 5
+	fmt.Print("Progress: [")
 	for k := 0; k < 20; k++ {
 		if k < bar {
 			fmt.Print("#")
@@ -698,20 +649,16 @@ func subMenuCari() {
 		switch p {
 		case 1:
 			fmt.Print("Masukkan kata kunci / tanggal (DD-MM-YYYY): ")
-			k := bacaStr()
-			cariTugasSequential(k)
+			cariTugasSequential(bacaStr())
 		case 2:
 			fmt.Print("Masukkan tanggal (DD-MM-YYYY): ")
-			k := bacaStr()
-			cariTugasBinary(k)
+			cariTugasBinary(bacaStr())
 		case 3:
 			fmt.Print("Masukkan kata kunci / tanggal (DD-MM-YYYY): ")
-			k := bacaStr()
-			cariMoodSequential(k)
+			cariMoodSequential(bacaStr())
 		case 4:
 			fmt.Print("Masukkan tanggal (DD-MM-YYYY): ")
-			k := bacaStr()
-			cariMoodBinary(k)
+			cariMoodBinary(bacaStr())
 		default:
 			fmt.Println(">> Pilihan tidak tersedia.")
 		}
@@ -755,8 +702,7 @@ func subMenuStat() {
 }
 
 func main() {
-	kesalahan := godotenv.Load()
-	if kesalahan != nil {
+	if err := godotenv.Load(); err != nil {
 		fmt.Println("File .env tidak ditemukan atau gagal dimuat.")
 		return
 	}
@@ -764,13 +710,12 @@ func main() {
 	pembaca = bufio.NewScanner(os.Stdin)
 	pembaca.Buffer(make([]byte, 1024*1024), 1024*1024)
 
-	jumMood = 0
-	jumTugas = 0
+	dataMood = make([]Mood, 0)
+	dataTugas = make([]Tugas, 0)
 
 	for {
 		tampilMenuUtama()
-		pilih := bacaInt()
-		switch pilih {
+		switch bacaInt() {
 		case 1:
 			subMenuMood()
 		case 2:
